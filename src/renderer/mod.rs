@@ -1,0 +1,228 @@
+pub mod mesh;
+pub mod shader;
+pub mod camera;
+
+pub use mesh::*;
+pub use shader::*;
+pub use camera::*;
+
+use winit::{
+    window::Window,
+    dpi::PhysicalSize
+};
+
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("no valid GPU was found; fatal")]
+    NoAdapterFound
+}
+
+pub struct Renderer {
+    window: Window,
+    _window_size: PhysicalSize<u32>,
+    surface: wgpu::Surface,
+    device: wgpu::Device,
+    queue: wgpu::Queue,
+    _config: wgpu::SurfaceConfiguration,
+    shader: Shader,
+    camera: Camera,
+    mesh: Mesh
+}
+
+impl Renderer {
+    pub fn window(&self) -> &Window { &self.window }
+
+    pub fn init(window: Window) -> anyhow::Result<Renderer> {
+        let window_size = window.inner_size();
+
+        log::info!("creating WGPU context");
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+            backends: wgpu::Backends::all(),
+            dx12_shader_compiler: Default::default()
+        });
+    
+        log::info!("get surface from window");
+        // unsafe as surface must live as long as window it was created from; fine as renderer owns both Window and Surface
+        let surface = unsafe { instance.create_surface(&window) }?;
+    
+        log::info!("get handle to graphics card");
+        let (adapter, device, queue) = pollster::block_on(async {
+            // note: this will not work for all devices; may need to enumerate adapters later
+            let adapter = instance.request_adapter(
+                &wgpu::RequestAdapterOptions {
+                    power_preference: wgpu::PowerPreference::default(),
+                    compatible_surface: Some(&surface),
+                    force_fallback_adapter: false
+                }
+            ).await.ok_or(Error::NoAdapterFound)?;
+
+            let (device, queue) = adapter.request_device(
+                &wgpu::DeviceDescriptor {
+                    features: wgpu::Features::empty(),
+                    limits: wgpu::Limits::default(),
+                    label: None
+                },
+                None
+            ).await?;
+
+            // ugly, but need to make error type explicit
+            // TODO: migrate to own error type to avoid allocation, if it becomes an issue
+            Ok::<_, anyhow::Error>((adapter, device, queue))
+        })?;
+
+        let capabilities = surface.get_capabilities(&adapter);
+
+        let surface_format = capabilities.formats.iter()
+            .copied()
+            .find(|f| f.is_srgb())
+            .unwrap_or(capabilities.formats[0]);
+
+        let config = wgpu::SurfaceConfiguration {
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+            format: surface_format,
+            width: window_size.width,
+            height: window_size.height,
+            present_mode: capabilities.present_modes[0],
+            alpha_mode: capabilities.alpha_modes[0],
+            view_formats: vec![]
+        };
+
+        surface.configure(&device, &config);
+
+        let vertices: &[Vertex] = &[
+            Vertex { position: [ 0.5, 0.5,  0.5], uv: [1.0, 0.0]}, // 0 top right
+            Vertex { position: [-0.5, 0.5,  0.5], uv: [0.0, 0.0]}, // 1 top left
+            Vertex { position: [-0.5, -0.5, 0.5], uv: [0.0, 1.0]}, // 2 bottom left
+            Vertex { position: [ 0.5, -0.5, 0.5], uv: [1.0, 1.0]}, // 3 bottom right
+
+            Vertex { position: [ 0.5, 0.5,  -0.5], uv: [1.0, 0.0]}, // 4 top right
+            Vertex { position: [-0.5, 0.5,  -0.5], uv: [0.0, 0.0]}, // 5 top left
+            Vertex { position: [-0.5, -0.5, -0.5], uv: [0.0, 1.0]}, // 6 bottom left
+            Vertex { position: [ 0.5, -0.5, -0.5], uv: [1.0, 1.0]}, // 7 bottom right
+        ];
+        let indices: &[u16] = &[
+            0, 1, 2,   0, 2, 3, 
+            6, 5, 4,   7, 6, 4,
+            4, 0, 3,   4, 3, 7,
+            1, 5, 6,   1, 6, 2,
+            5, 1, 4,   4, 1, 0
+        ];
+
+        let mesh = Mesh::new(&device, vertices, indices);
+
+        let camera = Camera::new(
+            &device,
+            (0.0, 1.0, 2.0).into(),
+            (0.0, 0.0, 0.0).into(),
+            glam::Vec3::Y,
+            config.width as f32 / config.height as f32,
+            90.0,
+            0.1,
+            100.0
+        );
+
+        let shader = Shader::from_source(&device, &config, &[camera.bind_group_layout()], "test_shader", include_str!("../shaders/shader.wgsl"));
+
+        Ok(Renderer {
+            window, _window_size: window_size, surface, device, queue, _config: config, shader, camera, mesh
+        })
+    }
+
+    pub fn render(&mut self) -> anyhow::Result<()> {
+        let output = self.surface.get_current_texture()?;
+        let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
+
+        let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("Render Encoder")
+        });
+        
+        let forward = self.camera.target - self.camera.eye;
+        let forward_norm = forward.normalize();
+        let mag = forward.length();
+        let right = forward_norm.cross(self.camera.up);
+
+        self.camera.eye = self.camera.target - (forward + right * 0.002).normalize() * mag;
+
+        self.camera.update(&self.queue);
+
+        {
+            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("Render Pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &view,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(wgpu::Color {
+                            r: 1.0,
+                            g: 0.0,
+                            b: 0.0,
+                            a: 1.0
+                        }),
+                        store: true
+                    }
+                })],
+                depth_stencil_attachment: None
+            });
+            
+            render_pass.bind_resource(0, &self.camera);
+            render_pass.use_shader(&self.shader);
+            render_pass.draw_mesh(&self.mesh);
+        }
+
+        self.queue.submit(std::iter::once(encoder.finish()));
+        output.present();
+
+        Ok(())
+    }
+}
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+pub struct Vertex {
+    pub position: [f32; 3],
+    pub uv: [f32; 2]
+}
+
+impl Vertex {
+    pub fn layout() -> wgpu::VertexBufferLayout<'static> {
+        const ATTRIBUTES: [wgpu::VertexAttribute; 2] = wgpu::vertex_attr_array![
+            0 => Float32x3, 1 => Float32x2
+        ];
+
+        wgpu::VertexBufferLayout {
+            array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
+            step_mode: wgpu::VertexStepMode::Vertex,
+            attributes: &ATTRIBUTES,
+        }
+    }
+}
+
+trait DrawMesh<'a> {
+    fn draw_mesh(&mut self, mesh: &'a Mesh);
+}
+
+impl<'a, 'b> DrawMesh<'a> for wgpu::RenderPass<'b>
+where 'a: 'b {
+    fn draw_mesh(&mut self, mesh: &'a Mesh) {
+        self.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
+        self.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+        self.draw_indexed(0..mesh.index_count, 0, 0..1);
+    }
+}
+
+trait GpuResource {
+    fn bind_group(&self) -> &wgpu::BindGroup;
+    fn bind_group_layout(&self) -> &wgpu::BindGroupLayout;
+    fn update(&self, queue: &wgpu::Queue);
+}
+
+trait BindResource<'a> {
+    fn bind_resource(&mut self, index: u32, resource: &'a impl GpuResource);
+}
+
+impl<'a, 'b> BindResource<'a> for wgpu::RenderPass<'b>
+where 'a: 'b {
+    fn bind_resource(&mut self, index: u32, resource: &'a impl GpuResource) {
+        self.set_bind_group(index, resource.bind_group(), &[]);
+    }
+}

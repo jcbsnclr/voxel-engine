@@ -13,9 +13,13 @@ wgpu = "0.16"
 pollster = "0.3"
 bytemuck = { version = "1.12", features = [ "derive" ] }
 anyhow = "1.0"
-cgmath = "0.18"
+thiserror = "1.0"
 
 [dependencies.image]
 version = "0.24"
 default-features = false
 features = ["png"]
+
+[dependencies.glam]
+version = "0.24"
+features = ["bytemuck"]
