@@ -1,9 +1,10 @@
 mod renderer;
+mod input;
 
 use winit::{
-    window::WindowBuilder,
+    window::{WindowBuilder, CursorGrabMode},
     event_loop::{EventLoop, ControlFlow},
-    event::{Event, WindowEvent},
+    event::{Event, WindowEvent, DeviceEvent, KeyboardInput, VirtualKeyCode, ElementState},
     dpi::LogicalSize
 };
 
@@ -22,18 +23,32 @@ fn main() -> anyhow::Result<()> {
         .build(&event_loop)
         .unwrap();
 
+    window.focus_window();
+    window.set_cursor_grab(CursorGrabMode::Locked)
+        .expect("failed to grab cursor");
+
     let mut renderer = renderer::Renderer::init(window)?;
+    let mut input = input::InputManager::new();
 
     log::info!("starting event loop");
     event_loop.run(move |event, _, control_flow| {
         match event {
             Event::WindowEvent { window_id, ref event } if renderer.window().id() == window_id => {
                 match event {
-                    WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
+                    // handles user press escape or pressing the close button
+                    WindowEvent::CloseRequested |
+                    WindowEvent::KeyboardInput { input: KeyboardInput { 
+                        virtual_keycode: Some(VirtualKeyCode::Escape), state: ElementState::Pressed, ..
+                    }, .. } => *control_flow = ControlFlow::Exit,
+
+
+                    event @ WindowEvent::KeyboardInput { .. } => input.process_keyboard(event),
 
                     _ => ()
                 }
             },
+
+            Event::DeviceEvent { event: DeviceEvent::MouseMotion { delta }, .. } => input.process_mouse(delta),
 
             Event::RedrawRequested(window_id) => if renderer.window().id() == window_id {
                 match renderer.render() {
