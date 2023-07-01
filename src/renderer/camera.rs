@@ -7,6 +7,7 @@ pub struct Camera {
     buffer: wgpu::Buffer,
     bind_group: wgpu::BindGroup,
     layout: wgpu::BindGroupLayout,
+    
     pub eye: Vec3,
     pub target: Vec3,
     pub up: Vec3,

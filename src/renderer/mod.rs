@@ -17,6 +17,7 @@ pub enum Error {
     NoAdapterFound
 }
 
+/// The [Renderer] is responsible for managing the GPU, and rendering to the window.
 pub struct Renderer {
     window: Window,
     _window_size: PhysicalSize<u32>,
