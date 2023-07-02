@@ -1,5 +1,4 @@
 use glam::*;
-use wgpu::util::DeviceExt;
 
 use super::GpuResource;
 
@@ -64,22 +63,29 @@ impl Camera {
     }
 
     pub fn rotate(&mut self, yaw: f32, pitch: f32) {
-        self.yaw = (self.yaw + yaw);
+        self.yaw += yaw;
         self.pitch = (self.pitch + pitch).clamp(-89.0, 89.0);
     }
 
-    pub fn travel(&mut self, forward: bool, backward: bool, left: bool, right: bool) {
+    pub fn travel(&mut self, forward: bool, backward: bool, left: bool, right: bool, up: bool, down: bool) {
         if forward {
-            self.position += self.front() * 0.01;
+            self.position += self.front_anchored() * 0.01;
         }
         if backward {
-            self.position -= self.front() * 0.01;
+            self.position -= self.front_anchored() * 0.01;
         }
         if left {
             self.position -= self.right() * 0.01;
         }
         if right {
             self.position += self.right() * 0.01;
+        }
+
+        if up {
+            self.position.y += 0.01;
+        }
+        if down {
+            self.position.y -= 0.01;
         }
     }
 
@@ -89,6 +95,12 @@ impl Camera {
             self.pitch.to_radians().sin(),
             self.yaw.to_radians().sin() * self.pitch.to_radians().cos()
         ).normalize()
+    }
+
+    fn front_anchored(&self) -> Vec3 {
+        let mut front = self.front();
+        front.y = 0.0;
+        front
     }
 
     fn right(&self) -> Vec3 {
@@ -111,18 +123,7 @@ impl GpuResource for Camera {
     }
 
     fn update(&self, queue: &wgpu::Queue) {
-        let world_up = vec3(0.0, 1.0, 0.0);
-
-        let front = vec3(
-            self.yaw.to_radians().cos() * self.pitch.to_radians().cos(),
-            self.pitch.to_radians().sin(),
-            self.yaw.to_radians().sin() * self.pitch.to_radians().cos()
-        ).normalize();
-
-        let right = front.cross(world_up).normalize();
-        let up = right.cross(front).normalize();
-
-        let view = glam::Mat4::look_at_rh(self.position, self.position + front, up);
+        let view = glam::Mat4::look_at_rh(self.position, self.position + self.front(), self.up());
         let proj = glam::Mat4::perspective_rh(self.fovy.to_radians(), self.aspect, self.znear, self.zfar);
         
         let matrix = proj * view;

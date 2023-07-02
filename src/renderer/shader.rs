@@ -49,6 +49,7 @@ impl Shader {
                     cull_mode: Some(wgpu::Face::Back),
                     // cull_mode: None,
                     polygon_mode: wgpu::PolygonMode::Fill,
+                    // polygon_mode: wgpu::PolygonMode::Line,
                     unclipped_depth: false,
                     conservative: false
                 },

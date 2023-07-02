@@ -39,7 +39,4 @@ impl InputManager {
     pub fn delta(&self) -> (f64, f64) {
         self.mouse_delta
     }
-
-    pub fn dx(&self) -> f64 { self.mouse_delta.0 }
-    pub fn dy(&self) -> f64 { self.mouse_delta.1 }
 }

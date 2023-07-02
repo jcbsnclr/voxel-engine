@@ -11,6 +11,10 @@ use winit::{
     dpi::PhysicalSize
 };
 
+use glam::*;
+
+use crate::world::Chunk;
+
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("no valid GPU was found; fatal")]
@@ -59,7 +63,7 @@ impl Renderer {
 
             let (device, queue) = adapter.request_device(
                 &wgpu::DeviceDescriptor {
-                    features: wgpu::Features::empty(),
+                    features: wgpu::Features::POLYGON_MODE_LINE,
                     limits: wgpu::Limits::default(),
                     label: None
                 },
@@ -90,26 +94,9 @@ impl Renderer {
 
         surface.configure(&device, &config);
 
-        let vertices: &[Vertex] = &[
-            Vertex { position: [ 0.5, 0.5,  0.5], uv: [1.0, 0.0]}, // 0 top right
-            Vertex { position: [-0.5, 0.5,  0.5], uv: [0.0, 0.0]}, // 1 top left
-            Vertex { position: [-0.5, -0.5, 0.5], uv: [0.0, 1.0]}, // 2 bottom left
-            Vertex { position: [ 0.5, -0.5, 0.5], uv: [1.0, 1.0]}, // 3 bottom right
+        let chunk = Chunk::new();
 
-            Vertex { position: [ 0.5, 0.5,  -0.5], uv: [1.0, 0.0]}, // 4 top right
-            Vertex { position: [-0.5, 0.5,  -0.5], uv: [0.0, 0.0]}, // 5 top left
-            Vertex { position: [-0.5, -0.5, -0.5], uv: [0.0, 1.0]}, // 6 bottom left
-            Vertex { position: [ 0.5, -0.5, -0.5], uv: [1.0, 1.0]}, // 7 bottom right
-        ];
-        let indices: &[u16] = &[
-            0, 1, 2,   0, 2, 3, 
-            6, 5, 4,   7, 6, 4,
-            4, 0, 3,   4, 3, 7,
-            1, 5, 6,   1, 6, 2,
-            5, 1, 4,   4, 1, 0
-        ];
-
-        let mesh = Mesh::new(&device, vertices, indices);
+        let mesh = chunk.build_mesh(&device);
 
         let camera = Camera::new(
             &device,
@@ -145,7 +132,7 @@ impl Renderer {
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 1.0,
+                            r: 0.0,
                             g: 0.0,
                             b: 0.0,
                             a: 1.0
@@ -171,8 +158,8 @@ impl Renderer {
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vertex {
-    pub position: [f32; 3],
-    pub uv: [f32; 2]
+    pub position: Vec3,
+    pub uv: Vec2
 }
 
 impl Vertex {

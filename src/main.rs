@@ -1,5 +1,6 @@
 mod renderer;
 mod input;
+mod world;
 
 use winit::{
     window::{WindowBuilder, CursorGrabMode},
@@ -10,7 +11,7 @@ use winit::{
 
 fn main() -> anyhow::Result<()> {
     env_logger::builder()
-        .filter_level(log::LevelFilter::Info)
+        // .filter_level(log::LevelFilter::Info)
         .init();
 
     log::info!("creating window");
@@ -59,6 +60,8 @@ fn main() -> anyhow::Result<()> {
                     input.is_pressed(VirtualKeyCode::S),
                     input.is_pressed(VirtualKeyCode::A),
                     input.is_pressed(VirtualKeyCode::D),
+                    input.is_pressed(VirtualKeyCode::Space),
+                    input.is_pressed(VirtualKeyCode::C),
                 );
 
                 match renderer.render() {
