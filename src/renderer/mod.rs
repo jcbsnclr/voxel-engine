@@ -1,10 +1,12 @@
 pub mod mesh;
 pub mod shader;
 pub mod camera;
+pub mod texture;
 
 pub use mesh::*;
 pub use shader::*;
 pub use camera::*;
+pub use texture::*;
 
 use winit::{
     window::Window,
@@ -31,6 +33,8 @@ pub struct Renderer {
     _config: wgpu::SurfaceConfiguration,
     shader: Shader,
     pub camera: Camera,
+    texture: Texture,
+    depth_buffer: Texture,
     mesh: Mesh
 }
 
@@ -107,10 +111,14 @@ impl Renderer {
             0.1, 100.0
         );
 
-        let shader = Shader::from_source(&device, &config, &[camera.bind_group_layout()], "test_shader", include_str!("../shaders/shader.wgsl"));
+        let image = image::load_from_memory(include_bytes!("../res/test.png"))?;
+        let texture = Texture::from_image(&device, &queue, &image, "test texture");
+        let depth_buffer = Texture::new_depth_buffer(&device, &queue, &config);
+
+        let shader = Shader::from_source(&device, &config, &[camera.bind_group_layout(), texture.bind_group_layout()], "test_shader", include_str!("../shaders/shader.wgsl"));
 
         Ok(Renderer {
-            window, _window_size: window_size, surface, device, queue, _config: config, shader, camera, mesh
+            window, _window_size: window_size, surface, device, queue, _config: config, shader, camera, texture, depth_buffer, mesh
         })
     }
 
@@ -132,18 +140,26 @@ impl Renderer {
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.0,
-                            g: 0.0,
-                            b: 0.0,
+                            r: 0.2,
+                            g: 0.2,
+                            b: 0.7,
                             a: 1.0
                         }),
                         store: true
                     }
                 })],
-                depth_stencil_attachment: None
+                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                    view: self.depth_buffer.view(),
+                    depth_ops: Some(wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(1.0),
+                        store: true
+                    }),
+                    stencil_ops: None
+                })
             });
             
             render_pass.bind_resource(0, &self.camera);
+            render_pass.bind_resource(1, &self.texture);
             render_pass.use_shader(&self.shader);
             render_pass.draw_mesh(&self.mesh);
         }

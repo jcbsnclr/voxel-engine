@@ -73,10 +73,10 @@ impl MeshBuilder {
         if faces.0 & CubeFaces::UP > 0 {
             let start = self.vertices.len() as u16;
             self.vertices.extend_from_slice(&[
-                Vertex { position: pos + vec3(0.5, 0.5, 0.5), uv: vec2(0.0, 0.0)},
+                Vertex { position: pos + vec3(0.5, 0.5, 0.5), uv: vec2(1.0, 1.0)},
                 Vertex { position: pos + vec3(-0.5, 0.5, 0.5), uv: vec2(0.0, 1.0)},
-                Vertex { position: pos + vec3(-0.5, 0.5, -0.5), uv: vec2(1.0, 0.0)},
-                Vertex { position: pos + vec3(0.5, 0.5, -0.5), uv: vec2(1.0, 1.0)},
+                Vertex { position: pos + vec3(-0.5, 0.5, -0.5), uv: vec2(0.0, 0.0)},
+                Vertex { position: pos + vec3(0.5, 0.5, -0.5), uv: vec2(1.0, 0.0)},
             ]);
             self.indices.extend_from_slice(&[
                 start + 2, start + 1, start + 0,
@@ -86,10 +86,10 @@ impl MeshBuilder {
         if faces.0 & CubeFaces::DOWN > 0 {
             let start = self.vertices.len() as u16;
             self.vertices.extend_from_slice(&[
-                Vertex { position: pos + vec3(0.5, -0.5, 0.5), uv: vec2(0.0, 0.0)},
+                Vertex { position: pos + vec3(0.5, -0.5, 0.5), uv: vec2(1.0, 1.0)},
                 Vertex { position: pos + vec3(-0.5, -0.5, 0.5), uv: vec2(0.0, 1.0)},
-                Vertex { position: pos + vec3(-0.5, -0.5, -0.5), uv: vec2(1.0, 0.0)},
-                Vertex { position: pos + vec3(0.5, -0.5, -0.5), uv: vec2(1.0, 1.0)},
+                Vertex { position: pos + vec3(-0.5, -0.5, -0.5), uv: vec2(0.0, 0.0)},
+                Vertex { position: pos + vec3(0.5, -0.5, -0.5), uv: vec2(1.0, 0.0)},
             ]);
             self.indices.extend_from_slice(&[
                 start + 0, start + 1, start + 2,
@@ -100,10 +100,10 @@ impl MeshBuilder {
         if faces.0 & CubeFaces::NORTH > 0 {
             let start = self.vertices.len() as u16;
             self.vertices.extend_from_slice(&[
-                Vertex { position: pos + vec3(0.5, 0.5, 0.5), uv: vec2(0.0, 0.0)},
+                Vertex { position: pos + vec3(0.5, 0.5, 0.5), uv: vec2(1.0, 1.0)},
                 Vertex { position: pos + vec3(-0.5, 0.5, 0.5), uv: vec2(0.0, 1.0)},
-                Vertex { position: pos + vec3(-0.5, -0.5, 0.5), uv: vec2(1.0, 0.0)},
-                Vertex { position: pos + vec3(0.5, -0.5, 0.5), uv: vec2(1.0, 1.0)},
+                Vertex { position: pos + vec3(-0.5, -0.5, 0.5), uv: vec2(0.0, 0.0)},
+                Vertex { position: pos + vec3(0.5, -0.5, 0.5), uv: vec2(1.0, 0.0)},
             ]);
             self.indices.extend_from_slice(&[
                 start + 0, start + 1, start + 2,
@@ -113,10 +113,10 @@ impl MeshBuilder {
         if faces.0 & CubeFaces::SOUTH > 0 {
             let start = self.vertices.len() as u16;
             self.vertices.extend_from_slice(&[
-                Vertex { position: pos + vec3(0.5, 0.5, -0.5), uv: vec2(0.0, 0.0)},
+                Vertex { position: pos + vec3(0.5, 0.5, -0.5), uv: vec2(1.0, 1.0)},
                 Vertex { position: pos + vec3(-0.5, 0.5, -0.5), uv: vec2(0.0, 1.0)},
-                Vertex { position: pos + vec3(-0.5, -0.5, -0.5), uv: vec2(1.0, 0.0)},
-                Vertex { position: pos + vec3(0.5, -0.5, -0.5), uv: vec2(1.0, 1.0)},
+                Vertex { position: pos + vec3(-0.5, -0.5, -0.5), uv: vec2(0.0, 0.0)},
+                Vertex { position: pos + vec3(0.5, -0.5, -0.5), uv: vec2(1.0, 0.0)},
             ]);
             self.indices.extend_from_slice(&[
                 start + 2, start + 1, start + 0,
@@ -127,10 +127,10 @@ impl MeshBuilder {
         if faces.0 & CubeFaces::EAST > 0 {
             let start = self.vertices.len() as u16;
             self.vertices.extend_from_slice(&[
-                Vertex { position: pos + vec3(0.5, 0.5, 0.5), uv: vec2(0.0, 0.0)},
+                Vertex { position: pos + vec3(0.5, 0.5, 0.5), uv: vec2(1.0, 1.0)},
                 Vertex { position: pos + vec3(0.5, 0.5, -0.5), uv: vec2(0.0, 1.0)},
-                Vertex { position: pos + vec3(0.5, -0.5, -0.5), uv: vec2(1.0, 0.0)},
-                Vertex { position: pos + vec3(0.5, -0.5, 0.5), uv: vec2(1.0, 1.0)},
+                Vertex { position: pos + vec3(0.5, -0.5, -0.5), uv: vec2(0.0, 0.0)},
+                Vertex { position: pos + vec3(0.5, -0.5, 0.5), uv: vec2(1.0, 0.0)},
             ]);
             self.indices.extend_from_slice(&[
                 start + 2, start + 1, start + 0,
@@ -140,10 +140,10 @@ impl MeshBuilder {
         if faces.0 & CubeFaces::WEST > 0 {
             let start = self.vertices.len() as u16;
             self.vertices.extend_from_slice(&[
-                Vertex { position: pos + vec3(-0.5, 0.5, 0.5), uv: vec2(0.0, 0.0)},
+                Vertex { position: pos + vec3(-0.5, 0.5, 0.5), uv: vec2(1.0, 1.0)},
                 Vertex { position: pos + vec3(-0.5, 0.5, -0.5), uv: vec2(0.0, 1.0)},
-                Vertex { position: pos + vec3(-0.5, -0.5, -0.5), uv: vec2(1.0, 0.0)},
-                Vertex { position: pos + vec3(-0.5, -0.5, 0.5), uv: vec2(1.0, 1.0)},
+                Vertex { position: pos + vec3(-0.5, -0.5, -0.5), uv: vec2(0.0, 0.0)},
+                Vertex { position: pos + vec3(-0.5, -0.5, 0.5), uv: vec2(1.0, 0.0)},
             ]);
             self.indices.extend_from_slice(&[
                 start + 0, start + 1, start + 2,
