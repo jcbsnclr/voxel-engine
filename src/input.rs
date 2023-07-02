@@ -27,8 +27,8 @@ impl InputManager {
         }
     }
 
-    pub fn process_mouse(&mut self, delta: (f64, f64)) {
-        self.mouse_delta = delta;
+    pub fn process_mouse(&mut self, (dx, dy): (f64, f64)) {
+        self.mouse_delta = (dx, -dy);
     }
 
     pub fn is_pressed(&self, key: VirtualKeyCode) -> bool {

@@ -26,7 +26,7 @@ pub struct Renderer {
     queue: wgpu::Queue,
     _config: wgpu::SurfaceConfiguration,
     shader: Shader,
-    camera: Camera,
+    pub camera: Camera,
     mesh: Mesh
 }
 
@@ -114,12 +114,10 @@ impl Renderer {
         let camera = Camera::new(
             &device,
             (0.0, 1.0, 2.0).into(),
-            (0.0, 0.0, 0.0).into(),
-            glam::Vec3::Y,
-            config.width as f32 / config.height as f32,
+            0.0, 0.0,
             90.0,
-            0.1,
-            100.0
+            1280.0 / 720.0,
+            0.1, 100.0
         );
 
         let shader = Shader::from_source(&device, &config, &[camera.bind_group_layout()], "test_shader", include_str!("../shaders/shader.wgsl"));
@@ -136,13 +134,6 @@ impl Renderer {
         let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
             label: Some("Render Encoder")
         });
-        
-        let forward = self.camera.target - self.camera.eye;
-        let forward_norm = forward.normalize();
-        let mag = forward.length();
-        let right = forward_norm.cross(self.camera.up);
-
-        self.camera.eye = self.camera.target - (forward + right * 0.002).normalize() * mag;
 
         self.camera.update(&self.queue);
 

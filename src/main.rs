@@ -51,13 +51,27 @@ fn main() -> anyhow::Result<()> {
             Event::DeviceEvent { event: DeviceEvent::MouseMotion { delta }, .. } => input.process_mouse(delta),
 
             Event::RedrawRequested(window_id) => if renderer.window().id() == window_id {
+                let (dx, dy) = input.delta();
+                renderer.camera.rotate(dx as f32 * 0.04, dy as f32 * 0.04);
+
+                renderer.camera.travel(
+                    input.is_pressed(VirtualKeyCode::W),
+                    input.is_pressed(VirtualKeyCode::S),
+                    input.is_pressed(VirtualKeyCode::A),
+                    input.is_pressed(VirtualKeyCode::D),
+                );
+
                 match renderer.render() {
                     Err(e) => log::error!("rendering failed: {}", e),
                     Ok(_) => ()
                 }
+
+                input.process_mouse((0.0, 0.0));
             },
 
-            Event::MainEventsCleared => renderer.window().request_redraw(),
+            Event::MainEventsCleared => {
+                renderer.window().request_redraw()
+            },
 
             _ => ()
         }
