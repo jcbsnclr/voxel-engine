@@ -1,17 +1,17 @@
 use image::GenericImageView;
 
 pub struct Texture {
-    texture: wgpu::Texture,
+    // texture: wgpu::Texture,
     view: wgpu::TextureView,
-    sampler: wgpu::Sampler,
+    // sampler: wgpu::Sampler,
     bind_group: wgpu::BindGroup,
     bind_group_layout: wgpu::BindGroupLayout
 }
 
 impl Texture {
-    pub fn texture(&self) -> &wgpu::Texture { &self.texture }
+    // pub fn texture(&self) -> &wgpu::Texture { &self.texture }
     pub fn view(&self) -> &wgpu::TextureView { &self.view }
-    pub fn sampler(&self) -> &wgpu::Sampler { &self.sampler }
+    // pub fn sampler(&self) -> &wgpu::Sampler { &self.sampler }
 
     pub fn from_image(device: &wgpu::Device, queue: &wgpu::Queue, image: &image::DynamicImage, label: &str) -> Texture {
         let rgba = image.to_rgba8();
@@ -105,10 +105,10 @@ impl Texture {
             }
         );
 
-        Texture { texture, view, sampler, bind_group_layout, bind_group }
+        Texture { view, bind_group_layout, bind_group }
     }
 
-    pub fn new_depth_buffer(device: &wgpu::Device, queue: &wgpu::Queue, config: &wgpu::SurfaceConfiguration) -> Texture {
+    pub fn new_depth_buffer(device: &wgpu::Device, config: &wgpu::SurfaceConfiguration) -> Texture {
         let size = wgpu::Extent3d {
             width: config.width,
             height: config.height,
@@ -185,7 +185,7 @@ impl Texture {
             }
         );
 
-        Texture { texture, view, sampler, bind_group, bind_group_layout }
+        Texture { view, bind_group, bind_group_layout }
     }
 }
 

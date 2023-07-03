@@ -113,7 +113,7 @@ impl Renderer {
 
         let image = image::load_from_memory(include_bytes!("../res/test.png"))?;
         let texture = Texture::from_image(&device, &queue, &image, "test texture");
-        let depth_buffer = Texture::new_depth_buffer(&device, &queue, &config);
+        let depth_buffer = Texture::new_depth_buffer(&device, &config);
 
         let shader = Shader::from_source(&device, &config, &[camera.bind_group_layout(), texture.bind_group_layout()], "test_shader", include_str!("../shaders/shader.wgsl"));
 
